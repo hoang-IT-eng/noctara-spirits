@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NOCTARA — Immersive Spirits | Enter The Unknown</title>
+<meta name="description" content="NOCTARA is a premium immersive spirits experience. Six cinematic chapters, a living portal, and three collectible spirits — Crimson Origin, Obsidian Veil, Ivory Eclipse."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css"/>
+</head>
+<body>
+<a class="skip" href="#collection">Skip to collection</a>
+
+<!-- LOADER -->
+<div id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <div class="loader-mark">◉</div>
+    <div class="loader-logo">NOCTARA</div>
+    <p class="loader-sub">IMMERSIVE SPIRITS — EST. MMXXVI</p>
+    <div class="loader-bar"><span id="loaderFill"></span></div>
+    <p class="loader-pct"><span id="loaderPct">0</span>% — ENTERING THE UNKNOWN</p>
+  </div>
+</div>
+
+<!-- CURSOR / GRAIN / GL -->
+<div id="cursor" aria-hidden="true"><span id="cursorLabel"></span></div>
+<div id="cursorRing" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div id="gl-host" aria-hidden="true"><canvas id="gl"></canvas><div class="gl-fallback"></div></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <a href="#awakening" class="brand" aria-label="NOCTARA home"><span class="brand-mark">N◉</span> NOCTARA <small>SPIRITS</small></a>
+  <nav class="header-nav" aria-label="Primary">
+    <a href="#journey">Discover</a><a href="#collection">Collection</a><a href="#story">Our Story</a><a href="#contact">Contact</a>
+  </nav>
+  <div class="header-actions">
+    <button id="soundBtn" class="icon-btn" aria-pressed="false" aria-label="Toggle ambient sound">SOUND OFF</button>
+    <button id="menuBtn" class="icon-btn menu-btn" aria-expanded="false" aria-controls="menuOverlay">MENU ☰</button>
+  </div>
+</header>
+
+<!-- FULLSCREEN NAV -->
+<div id="menuOverlay" class="menu-overlay" aria-hidden="true">
+  <button id="menuClose" class="icon-btn close-btn">CLOSE ✕</button>
+  <nav aria-label="Full screen">
+    <a href="#awakening" data-num="01">The Awakening</a>
+    <a href="#journey" data-num="02">The Journey</a>
+    <a href="#portal" data-num="03">The Portal</a>
+    <a href="#collection" data-num="04">The Sanctuary</a>
+    <a href="#transformation" data-num="05">The Transformation</a>
+    <a href="#reveal" data-num="06">The Reveal</a>
+  </nav>
+  <p class="menu-foot">CHILL YOUR SPIRIT. SHAKE YOUR SPIRIT. POUR YOUR SPIRIT.</p>
+</div>
+
+<!-- PROGRESS RAIL -->
+<aside class="progress-rail" aria-label="Story progress">
+  <span class="rail-line"><span id="railFill"></span></span>
+  <ol>
+    <li data-target="awakening" class="active"><i></i><span>Awakening</span></li>
+    <li data-target="journey"><i></i><span>Journey</span></li>
+    <li data-target="portal"><i></i><span>Portal</span></li>
+    <li data-target="collection"><i></i><span>Sanctuary</span></li>
+    <li data-target="transformation"><i></i><span>Transformation</span></li>
+    <li data-target="reveal"><i></i><span>Reveal</span></li>
+  </ol>
+  <span id="chapterLabel">01 / 06</span>
+</aside>
+
+<main>
+  <!-- 01 AWAKENING -->
+  <section id="awakening" class="scene scene-01" data-chapter="01">
+    <div class="scene-content center">
+      <p class="kicker reveal">Chapter I — The Awakening • A Spirit Has A Story</p>
+      <h1 class="display huge"><span class="mask"><span>ENTER THE</span></span><span class="mask"><span class="italic crimson-text">UNKNOWN</span></span></h1>
+      <p class="lede reveal">Every spirit has a story. Ours begins in darkness —<br/>with dust, a distant crimson horizon, and a traveler who chose not to turn back.</p>
+      <div class="hero-cta reveal">
+        <a href="#journey" class="btn btn-primary">Begin The Journey ↓</a>
+        <a href="#collection" class="btn btn-ghost">Discover The Collection</a>
+      </div>
+    </div>
+    <div class="scroll-hint" aria-hidden="true"><span>SCROLL</span><i></i></div>
+    <div class="caption caption-left">FIG. 01 — THE TRAVELER, ENGRAVED IN IVORY &amp; INK</div>
+  </section>
+
+  <!-- 02 JOURNEY -->
+  <section id="journey" class="scene scene-02" data-chapter="02">
+    <div class="comic-caption caption-card reveal">
+      <span>Caption — The Ruins Speak</span>
+      <p>“He walked where maps ended. Columns rose like sentences unfinished. The air tasted of ash, iron, and something sweet underneath.”</p>
+    </div>
+    <div class="scene-content left">
+      <p class="kicker">Chapter II — The Journey</p>
+      <h2 class="display">THROUGH<br/><em>RUINS &amp;</em><br/>EMBERS</h2>
+      <p class="body">Scroll is the camera. Move slowly and the world follows — ruins emerge, columns pass, particles bend around your cursor. This is not a page you read. It is a road you travel.</p>
+      <ul class="journey-list">
+        <li><b>Scroll</b> controls forward movement</li>
+        <li><b>Cursor</b> subtly steers the camera</li>
+        <li><b>Velocity</b> stretches light &amp; grain</li>
+      </ul>
+    </div>
+    <img class="framed-img img-ruins reveal" src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200&auto=format&fit=crop" alt="Misty layered mountains at dawn, treated as an engraved landscape"/>
+  </section>
+
+  <!-- 03 PORTAL -->
+  <section id="portal" class="scene scene-03" data-chapter="03">
+    <div class="scene-content center">
+      <p class="kicker">Chapter III — The Portal</p>
+      <h2 class="display">TOUCH THE<br/><span class="crimson-text">CRIMSON DEEP</span></h2>
+      <p class="body narrow">Move your cursor over the portal. The liquid remembers every touch — ripples, displacement, a breath of blue in red. Scroll onward and pass through it.</p>
+      <p class="portal-hint" id="portalHint">◉ MOVE CURSOR OVER THE CENTRE — THE PORTAL REACTS</p>
+      <button class="btn btn-ghost" id="rippleBtn">Send A Ripple</button>
+    </div>
+  </section>
+
+  <!-- 04 SANCTUARY / COLLECTION -->
+  <section id="collection" class="scene scene-04" data-chapter="04">
+    <div class="scene-content wide">
+      <p class="kicker center-text">Chapter IV — The Sanctuary • The Collection</p>
+      <h2 class="display center-text">THREE ARTIFACTS.<br/><em>ONE SANCTUARY.</em></h2>
+      <p class="body center-text narrow" style="margin-inline:auto">Select a bottle. The camera draws closer, the light changes for that spirit alone, and its story unfolds. No grid. No shop. A discovery.</p>
+
+      <div class="bottles" role="tablist" aria-label="Spirits collection">
+        <button class="bottle-card is-active" data-bottle="0" role="tab" aria-selected="true" data-cursor="TASTE">
+          <span class="bottle-visual bottle-crimson"><span class="bottle-neck"></span><span class="bottle-label">N<br/>◉</span></span>
+          <strong>CRIMSON ORIGIN</strong><small>Single Cask • 46% • Red Aperitif Spirit</small><span class="price">$189</span>
+        </button>
+        <button class="bottle-card" data-bottle="1" role="tab" aria-selected="false" data-cursor="TASTE">
+          <span class="bottle-visual bottle-obsidian"><span class="bottle-neck"></span><span class="bottle-label">N<br/>◉</span></span>
+          <strong>OBSIDIAN VEIL</strong><small>Midnight Botanical • 44% • Dark Gin</small><span class="price">$165</span>
+        </button>
+        <button class="bottle-card" data-bottle="2" role="tab" aria-selected="false" data-cursor="TASTE">
+          <span class="bottle-visual bottle-ivory"><span class="bottle-neck"></span><span class="bottle-label dark">N<br/>◉</span></span>
+          <strong>IVORY ECLIPSE</strong><small>Ivory Liqueur • 38% • Limited Veil</small><span class="price">$210</span>
+        </button>
+      </div>
+
+      <article class="product-detail" id="productDetail" aria-live="polite">
+        <div>
+          <p class="detail-kicker" id="dKicker">N°01 — THE FIRST FIRE</p>
+          <h3 id="dName">CRIMSON ORIGIN</h3>
+          <p id="dDesc">Born from bitter cherry and smoked plum, finished in charred oak. The first spirit the traveler tasted after the portal — and the reason he stayed.</p>
+        </div>
+        <div class="notes">
+          <p><span>NOSE</span><b id="dNose">Bitter cherry, cacao husk, wet stone</b></p>
+          <p><span>PALATE</span><b id="dPalate">Smoked plum, black pepper, blood orange</b></p>
+          <p><span>FINISH</span><b id="dFinish">Long, warm, a whisper of ash &amp; honey</b></p>
+          <a href="#contact" class="btn btn-primary small">Enquire — Private Allocation</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 05 TRANSFORMATION -->
+  <section id="transformation" class="scene scene-05" data-chapter="05">
+    <div class="scene-content center">
+      <p class="kicker">Chapter V — The Transformation</p>
+      <h2 class="display huge-2">POUR.<br/><span class="italic">BECOME.</span></h2>
+      <p class="body narrow">The bottle rises. Liquid falls. Architecture breaks into floating ink. Crimson energy threads through stone — and the traveler is no longer only a traveler.</p>
+      <button class="btn btn-primary" id="vortexBtn">Trigger The Vortex ◉</button>
+      <p class="tiny">Or keep scrolling — the vortex follows your progress.</p>
+    </div>
+  </section>
+
+  <!-- 06 REVEAL + STORY -->
+  <section id="reveal" class="scene scene-06" data-chapter="06">
+    <div class="scene-content center reveal-hero">
+      <div class="big-logo">NOCTARA</div>
+      <h2 class="manifesto">CHILL YOUR SPIRIT.<br/>SHAKE YOUR SPIRIT.<br/><span class="crimson-text">POUR YOUR SPIRIT.</span></h2>
+      <p class="body narrow">We do not make drinks for the background. We make spirits for the moment the room goes quiet and a story begins.</p>
+    </div>
+  </section>
+
+  <section id="story" class="editorial">
+    <div class="editorial-grid">
+      <div>
+        <p class="kicker">Our Story</p>
+        <h2 class="display mid">AN ILLUSTRATED<br/>WORLD, BOTTLED.</h2>
+      </div>
+      <div class="editorial-copy">
+        <p>NOCTARA was imagined as a graphic novel you can taste. Every label is engraved by hand, every cask is chosen for a chapter, not a category. Ink Black for night. Warm Ivory for paper. Deep Crimson for the pulse underneath.</p>
+        <p>We work in small allocations, with no shortcuts and no ordinary templates — in the distillery, or on this page. If you felt the portal ripple, you already understand the house.</p>
+        <div class="stats">
+          <div><b>03</b><span>Spirits</span></div><div><b>06</b><span>Chapters</span></div><div><b>01</b><span>Portal</span></div><div><b>∞</b><span>Stories</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="collection-strip">
+      <img src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?q=80&w=1200&auto=format&fit=crop" alt="Premium whiskey bottle and glass in dramatic light"/>
+      <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop" alt="Dark moody bar with warm lights"/>
+      <img src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?q=80&w=1200&auto=format&fit=crop" alt="Craft cocktail being prepared at a bar"/>
+    </div>
+  </section>
+
+  <footer id="contact" class="footer">
+    <p class="kicker">Contact — Private Allocations &amp; Tastings</p>
+    <h2 class="display mid">ENTER THE UNKNOWN,<br/><em>AGAIN.</em></h2>
+    <form class="contact-form" id="contactForm">
+      <label>Your email<input type="email" required placeholder="you@example.com" aria-label="Email"/></label>
+      <label>Spirit of interest<select aria-label="Spirit of interest"><option>Crimson Origin</option><option>Obsidian Veil</option><option>Ivory Eclipse</option><option>Full Collection</option></select></label>
+      <button class="btn btn-primary" type="submit">Request Allocation →</button>
+      <p class="form-msg" id="formMsg" role="status"></p>
+    </form>
+    <div class="footer-bottom"><span>© 2026 NOCTARA SPIRITS — ORIGINAL ILLUSTRATED WORLD. PLEASE ENJOY RESPONSIBLY. 18+</span><span>INK • CRIMSON • IVORY • BLUE</span></div>
+  </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+<script src="assets/js/engine.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
