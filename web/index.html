@@ -10,11 +10,24 @@
 <meta property="og:image" content="assets/illustrations/traveler-awakening.jpg"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;500;600&family=Cinzel:wght@700;900&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;500;600&family=Cinzel:wght@700;900&family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,600&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css"/>
 </head>
-<body>
+<body class="gated">
 <a class="skip" href="#collection">Skip to collection</a>
+
+<!-- AGE GATE -->
+<div class="age-gate" id="ageGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="crest">✦</div>
+  <p class="gate-sub">The Noctara Experience</p>
+  <h2 class="gate-title" id="gateTitle">ARE YOU OF LEGAL<br/>DRINKING AGE?</h2>
+  <p class="gate-quote">"Enter the unknown."</p>
+  <div class="gate-actions">
+    <button class="btn-enter" id="btnEnter">Enter (18+)</button>
+    <a class="btn-exit" href="https://www.google.com">Exit</a>
+  </div>
+  <p class="gate-note">NOCTARA IS A FICTIONAL PORTFOLIO BRAND — PLEASE ENJOY RESPONSIBLY</p>
+</div>
 
 <div class="loader" id="loader"><span></span></div>
 
@@ -36,19 +49,21 @@
     </header>
 
     <section class="stage" aria-live="polite">
-      <p class="ch-kicker" id="chKicker">NOCTARA SPIRITS — A CINEMATIC FLIGHT</p>
+      <p class="ch-kicker" id="chKicker">Act I — The Awakening</p>
       <h1 class="ch-title" id="chTitle">Enter the<br/>unknown.</h1>
-      <p class="ch-cap" id="chCap">Every spirit has a story.<br/>Scroll — and fly into ours.</p>
+      <p class="ch-cap" id="chCap">Heavenly cream. Earthly decadence.<br/>Crafted for the saints and the sinners alike.</p>
       <button class="go" id="go" aria-label="Disperse the valley — hover interaction">
         <svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
       </button>
       <p class="ch-small" id="chSmall">HOVER THE CIRCLE — THE VALLEY HOLDS ITS BREATH</p>
     </section>
 
+    <div class="coords">10.8231° N, 106.6297° E — Saigon</div>
     <div class="corner">
       <span id="scrollHint">Scroll to fly</span><i></i>
-      <button class="sound" id="sound" aria-pressed="false" aria-label="Ambient sound">
-        <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5Z"/><path class="w" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="m16 10 4 4m0-4-4 4"/></svg>
+      <button class="sound-btn" id="sound" data-active="false" aria-pressed="false" aria-label="Toggle ambient sound">
+        <span class="bars"><span></span><span></span><span></span></span>
+        <span class="sound-label">Sound [Off]</span>
       </button>
     </div>
 

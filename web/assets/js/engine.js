@@ -19,6 +19,34 @@
   const scene=new THREE.Scene();
   scene.fog=new THREE.FogExp2(0x070507,0.028);
   const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,0.1,220);
+  scene.add(camera);
+
+  // ---------- liquid ink backdrop (original GLSL, rides with the camera) ----------
+  const inkUniforms={uTime:{value:0},uMouse:{value:new THREE.Vector2(0.5,0.5)},uHover:{value:0},uRes:{value:new THREE.Vector2(innerWidth,innerHeight)}};
+  const inkPlane=new THREE.Mesh(new THREE.PlaneGeometry(150,84), new THREE.ShaderMaterial({
+    depthWrite:false, depthTest:false, uniforms:inkUniforms,
+    vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`varying vec2 vUv; uniform float uTime; uniform vec2 uMouse; uniform float uHover; uniform vec2 uRes;
+      float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+      float noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
+      float fbm(vec2 p){ float v=0.0; float a=0.5; for(int i=0;i<4;i++){ v+=a*noise(p); p*=2.1; a*=0.45; } return v; }
+      void main(){
+        vec2 uv=vUv;
+        float dist=distance(uv,uMouse);
+        float ripple=sin(dist*18.0-uTime*2.0)*exp(-dist*3.5);
+        vec2 duv=uv+(uv-uMouse)*ripple*0.08;
+        vec2 flow=duv*2.6+vec2(uTime*0.030,-uTime*0.020);
+        float q=fbm(flow);
+        float r=fbm(flow+q+vec2(uTime*0.040));
+        vec3 col=mix(vec3(0.016,0.016,0.018), vec3(0.30,0.035,0.05), smoothstep(0.32,0.9,r)*0.62);
+        col=mix(col, vec3(0.42,0.32,0.17), pow(r,4.0)*(0.16+uHover*0.30));   // gold-foil glints, stronger on hover
+        float vig=smoothstep(1.25,0.15,length(uv-0.5));
+        gl_FragColor=vec4(col*vig,1.0);
+      }`
+  }));
+  inkPlane.position.set(0,0,-70); inkPlane.renderOrder=-10; inkPlane.frustumCulled=false;
+  camera.add(inkPlane);
 
   // ---------- terrain height (procedural valley) ----------
   function heightAt(x,z){
@@ -151,6 +179,8 @@
     const mat=new THREE.MeshPhysicalMaterial({color:c,roughness:0.15,metalness:0.1,transparent:true,opacity:0.95,clearcoat:1});
     const body=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.6,1.7,20),mat); g.add(body);
     const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.4,0.8,16),mat); neck.position.y=1.2; g.add(neck);
+    const foil=new THREE.Mesh(new THREE.CylinderGeometry(0.565,0.575,0.34,20,1,true), new THREE.MeshStandardMaterial({color:0xc9a96e,roughness:0.28,metalness:0.95,side:THREE.DoubleSide}));
+    foil.position.y=0.05; g.add(foil);   // hot-stamped gold foil band
     g.position.set((i-1)*1.9,0.4,0); sanctuary.add(g);
   });
   scene.add(sanctuary);
@@ -172,17 +202,19 @@
     tMx=(e.clientX/innerWidth-0.5)*2; tMy=(e.clientY/innerHeight-0.5)*2;
     uniforms.uMouse.value.set((e.clientX/innerWidth)*2-1, -((e.clientY/innerHeight)*2-1));
     pUniforms.uMouse.value.set(tMx,-tMy);
+    inkUniforms.uMouse.value.set(e.clientX/innerWidth, 1-e.clientY/innerHeight);
   });
   window.__noctara={
     setProgress(v){ target=Math.max(0,Math.min(1,v)); },
     startHoverTransition(){ disperseTarget=1; if(window.__noctaraAudio) window.__noctaraAudio(true); },
     stopHoverTransition(){ disperseTarget=0; if(window.__noctaraAudio) window.__noctaraAudio(false); },
     ripple(){ disperseTarget=1; setTimeout(()=>{ if(!window.__hoverHeld) disperseTarget=0; },650); },
+    intro(){ disperseTarget=1; setTimeout(()=>{ if(!window.__hoverHeld) disperseTarget=0; },1400); },
     setBottle(i){ cols.forEach((c,j)=>{ sanctuary.children[j].scale.setScalar(j===i?1.25:0.9); }); bloodLight.color.setHex([0xB51F2B,0x5b7ea6,0xF0E8D8][i]); }
   };
 
   let visible=true; document.addEventListener('visibilitychange',()=>visible=!document.hidden);
-  const clock=new THREE.Clock(); let readySent=false;
+  const clock=new THREE.Clock(); let readySent=false, inkTime=0;
   function tick(){
     requestAnimationFrame(tick); if(!visible) return;
     const dt=Math.min(clock.getDelta(),0.05), t=clock.elapsedTime;
@@ -205,6 +237,8 @@
     uniforms.uTime.value=t; uniforms.uDisperse.value=disperse;
     uniforms.uHover.value=disperse; uniforms.uCamPos.value.copy(camera.position);
     pUniforms.uTime.value=t;
+    inkTime+=dt*(disperseTarget>0.5?0.25:1.0);               // hover slows the ink flow
+    inkUniforms.uTime.value=inkTime; inkUniforms.uHover.value=disperse;
     portal.lookAt(camera.position.x,portal.position.y,camera.position.z);
     ring.rotation.z=t*0.15;
     sanctuary.rotation.y=Math.sin(t*0.4)*0.15;

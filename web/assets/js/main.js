@@ -10,16 +10,16 @@
   function ready(){ if(revealed) return; revealed=true; loader.classList.add('gone'); ui.classList.add('on'); }
   window.addEventListener('noctara:ready',ready); setTimeout(ready,3500);
 
-  // Lenis smooth scroll
+  // Lenis smooth scroll (stopped until the age gate is passed)
   let lenis=null;
-  if(window.Lenis && !reduced){ lenis=new Lenis({duration:1.3,smoothWheel:true}); function raf(t){ lenis.raf(t); requestAnimationFrame(raf);} requestAnimationFrame(raf); }
+  if(window.Lenis && !reduced){ lenis=new Lenis({duration:1.3,smoothWheel:true}); function raf(t){ lenis.raf(t); requestAnimationFrame(raf);} requestAnimationFrame(raf); lenis.stop(); }
   $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
     const id=a.getAttribute('href'); if(id.length>1){ const el=document.querySelector(id); if(el){ e.preventDefault(); if(lenis) lenis.scrollTo(el,{offset:0}); else el.scrollIntoView({behavior:reduced?'auto':'smooth'}); } }
   }));
 
   // Chapters along the flight
   const CHAPTERS=[
-    {at:0.00,k:'NOCTARA SPIRITS — A CINEMATIC FLIGHT',t:'Enter the<br/>unknown.',c:'Every spirit has a story.<br/>Scroll — and fly into ours.',s:'HOVER THE CIRCLE — THE VALLEY HOLDS ITS BREATH',rail:'01 — AWAKENING',go:true},
+    {at:0.00,k:'ACT I — THE AWAKENING',t:'Enter the<br/>unknown.',c:'Heavenly cream. Earthly decadence.<br/>Crafted for the saints and the sinners alike.',s:'HOVER THE CIRCLE — THE VALLEY HOLDS ITS BREATH',rail:'01 — AWAKENING',go:true},
     {at:0.16,k:'Chapter II — The Journey',t:'Through ruins<br/>&amp; <em>embers</em>',c:'The camera is yours now. Blooms open<br/>as you near them; the cursor pushes the valley aside.',s:'MOVE YOUR CURSOR — THE BLOOMS RECOIL &amp; GLOW',rail:'02 — JOURNEY',go:false},
     {at:0.38,k:'Chapter III — The Portal',t:'Touch the<br/><em>crimson deep</em>',c:'Ahead, the portal turns in its arch.<br/>Fly closer — its liquid remembers every touch.',s:'THE RING AHEAD IS REAL GEOMETRY, NOT A PICTURE',rail:'03 — PORTAL',go:false},
     {at:0.58,k:'Chapter IV — The Sanctuary',t:'Three artifacts.<br/><em>One sanctuary.</em>',c:'Crimson. Obsidian. Ivory.<br/>They are waiting at the end of the valley.',s:'FULL COLLECTION WAITS BELOW THE FLIGHT',rail:'04 — SANCTUARY',go:false},
@@ -60,21 +60,37 @@
   goBtn.addEventListener('pointerleave',()=>{ window.__hoverHeld=false; if(window.__noctara) window.__noctara.stopHoverTransition(); });
   goBtn.addEventListener('click',()=>{ const el=$('#collection'); if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior:'smooth'}); });
 
-  // Audio — generated drone through a low-pass; muted by default; hover muffles further
-  let actx=null, master=null, filter=null, soundOn=false, muffled=false;
+  // Audio — generated sub-bass drone through a low-pass; starts only on a user gesture
+  let actx=null, master=null, filter=null, soundOn=false;
+  const soundBtn=$('#sound');
   function ensureAudio(){
     if(actx) return;
     actx=new (window.AudioContext||window.webkitAudioContext)();
-    filter=actx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=1200;
+    filter=actx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=2400; filter.Q.value=0.6;
     master=actx.createGain(); master.gain.value=0;
     filter.connect(master); master.connect(actx.destination);
-    [55,82.4,110.3].forEach((f,i)=>{ const o=actx.createOscillator(); o.type=i?'triangle':'sine'; o.frequency.value=f; const g=actx.createGain(); g.gain.value=i?0.1:0.45; o.connect(g); g.connect(filter); o.start(); });
+    // sub drone (saw through low-pass reads as a dark hum) + two soft harmonic sines ("glass" resonance)
+    const saw=actx.createOscillator(); saw.type='sawtooth'; saw.frequency.value=55;
+    const sawG=actx.createGain(); sawG.gain.value=0.5; saw.connect(sawG); sawG.connect(filter); saw.start();
+    [110.3,164.8,220.5].forEach((f,i)=>{ const o=actx.createOscillator(); o.type='sine'; o.frequency.value=f; const g=actx.createGain(); g.gain.value=i?0.05:0.12; o.connect(g); g.connect(filter); o.start(); });
   }
-  window.__noctaraAudio=function(m){ muffled=m; if(actx&&filter) filter.frequency.linearRampToValueAtTime(m?320:1200, actx.currentTime+0.6); };
-  $('#sound').addEventListener('click',function(){
-    ensureAudio(); actx.resume(); soundOn=!soundOn;
-    this.setAttribute('aria-pressed',String(soundOn));
-    master.gain.linearRampToValueAtTime(soundOn?0.055:0, actx.currentTime+1.1);
+  function setSound(on){
+    ensureAudio(); actx.resume(); soundOn=on;
+    soundBtn.setAttribute('data-active',String(on)); soundBtn.setAttribute('aria-pressed',String(on));
+    soundBtn.querySelector('.sound-label').textContent=on?'Sound [On]':'Sound [Off]';
+    master.gain.linearRampToValueAtTime(on?0.06:0, actx.currentTime+1.1);
+  }
+  window.__noctaraAudio=function(muffled){ if(actx&&filter) filter.frequency.linearRampToValueAtTime(muffled?700:2400, actx.currentTime+0.6); };
+  soundBtn.addEventListener('click',()=>setSound(!soundOn));
+
+  // Age gate — ENTER dismisses, unlocks scroll, reveals UI, starts audio & the intro pulse
+  $('#btnEnter').addEventListener('click',()=>{
+    $('#ageGate').classList.add('dismissed');
+    document.body.classList.remove('gated');
+    if(lenis) lenis.start();
+    ready();
+    setSound(true);
+    if(window.__noctara) window.__noctara.intro();
   });
 
   // Cursor
