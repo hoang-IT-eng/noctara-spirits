@@ -30,6 +30,8 @@ A cinematic, scroll-driven web experience for a premium spirits brand, built as 
 | Obsidian Veil — $165 | Midnight Botanical Dark Gin, 44% | juniper, black cardamom, sea salt |
 | Ivory Eclipse — $210 | Ivory Liqueur, 38% | white tea, pear, vanilla ash |
 
+**Live:** https://hoang-noctara.pages.dev — Repo: https://github.com/hoang-IT-eng/noctara-spirits
+
 ## Run locally
 
 ```bash
