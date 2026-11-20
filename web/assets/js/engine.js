@@ -39,8 +39,8 @@
         vec2 flow=duv*2.6+vec2(uTime*0.030,-uTime*0.020);
         float q=fbm(flow);
         float r=fbm(flow+q+vec2(uTime*0.040));
-        vec3 col=mix(vec3(0.016,0.016,0.018), vec3(0.30,0.035,0.05), smoothstep(0.32,0.9,r)*0.62);
-        col=mix(col, vec3(0.42,0.32,0.17), pow(r,4.0)*(0.16+uHover*0.30));   // gold-foil glints, stronger on hover
+        vec3 col=mix(vec3(0.016,0.016,0.018), vec3(0.52,0.06,0.085), smoothstep(0.28,0.92,r)*0.88);
+        col=mix(col, vec3(0.55,0.40,0.20), pow(r,4.0)*(0.22+uHover*0.35));   // gold-foil glints, stronger on hover
         float vig=smoothstep(1.25,0.15,length(uv-0.5));
         gl_FragColor=vec4(col*vig,1.0);
       }`
