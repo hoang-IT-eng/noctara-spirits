@@ -1,63 +1,86 @@
-/* NOCTARA — scroll engine, UI, products, audio, cursor */
+/* NOCTARA v2 — interface layer: loader-gated reveal, flight chapters,
+   idle drift, hover-transition coupling, generated audio with low-pass muffle. */
 (function(){
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const loader=$('#loader'), ui=$('#ui');
 
-  // Loader (progress simulated tied to load, capped fast)
-  let lp=0; const fill=$('#loaderFill'), pct=$('#loaderPct');
-  const li=setInterval(()=>{ lp=Math.min(92,lp+Math.random()*16); fill.style.width=lp+'%'; pct.textContent=Math.floor(lp); },110);
-  window.addEventListener('load',()=>{ setTimeout(()=>{ clearInterval(li); fill.style.width='100%'; pct.textContent='100'; setTimeout(()=>$('#loader').classList.add('done'),350); },250); });
-  setTimeout(()=>$('#loader').classList.add('done'),3200); // never trap visitor
+  // Loader: fades when the engine reports ready (fallback timeout so nobody is trapped)
+  let revealed=false;
+  function ready(){ if(revealed) return; revealed=true; loader.classList.add('gone'); ui.classList.add('on'); }
+  window.addEventListener('noctara:ready',ready); setTimeout(ready,3500);
 
-  // Lenis + GSAP
+  // Lenis smooth scroll
   let lenis=null;
-  if(window.Lenis && !reduced){ lenis=new Lenis({duration:1.25,smoothWheel:true}); }
-  if(window.gsap && window.ScrollTrigger){ gsap.registerPlugin(ScrollTrigger); }
-  function raf(t){ if(lenis) lenis.raf(t); requestAnimationFrame(raf); } requestAnimationFrame(raf);
-  if(lenis && window.gsap){ lenis.on('scroll',()=>{ if(window.ScrollTrigger) ScrollTrigger.update(); }); }
+  if(window.Lenis && !reduced){ lenis=new Lenis({duration:1.3,smoothWheel:true}); function raf(t){ lenis.raf(t); requestAnimationFrame(raf);} requestAnimationFrame(raf); }
+  $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+    const id=a.getAttribute('href'); if(id.length>1){ const el=document.querySelector(id); if(el){ e.preventDefault(); if(lenis) lenis.scrollTo(el,{offset:0}); else el.scrollIntoView({behavior:reduced?'auto':'smooth'}); } }
+  }));
 
-  // Anchor links via lenis
-  $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{ const id=a.getAttribute('href'); if(id.length>1){ const el=document.querySelector(id); if(el){ e.preventDefault(); closeMenu(); if(lenis) lenis.scrollTo(el,{offset:-70}); else el.scrollIntoView({behavior:reduced?'auto':'smooth'}); } } }));
+  // Chapters along the flight
+  const CHAPTERS=[
+    {at:0.00,k:'NOCTARA SPIRITS — A CINEMATIC FLIGHT',t:'Enter the<br/>unknown.',c:'Every spirit has a story.<br/>Scroll — and fly into ours.',s:'HOVER THE CIRCLE — THE VALLEY HOLDS ITS BREATH',rail:'01 — AWAKENING',go:true},
+    {at:0.16,k:'Chapter II — The Journey',t:'Through ruins<br/>&amp; <em>embers</em>',c:'The camera is yours now. Blooms open<br/>as you near them; the cursor pushes the valley aside.',s:'MOVE YOUR CURSOR — THE BLOOMS RECOIL &amp; GLOW',rail:'02 — JOURNEY',go:false},
+    {at:0.38,k:'Chapter III — The Portal',t:'Touch the<br/><em>crimson deep</em>',c:'Ahead, the portal turns in its arch.<br/>Fly closer — its liquid remembers every touch.',s:'THE RING AHEAD IS REAL GEOMETRY, NOT A PICTURE',rail:'03 — PORTAL',go:false},
+    {at:0.58,k:'Chapter IV — The Sanctuary',t:'Three artifacts.<br/><em>One sanctuary.</em>',c:'Crimson. Obsidian. Ivory.<br/>They are waiting at the end of the valley.',s:'FULL COLLECTION WAITS BELOW THE FLIGHT',rail:'04 — SANCTUARY',go:false},
+    {at:0.76,k:'Chapter V — The Transformation',t:'Pour.<br/><em>Become.</em>',c:'The valley thins into light.<br/>What was scattered becomes spirit.',s:'THE BLOOMS DISPERSE AS YOU ARRIVE',rail:'05 — TRANSFORMATION',go:false},
+    {at:0.90,k:'Chapter VI — The Reveal',t:'Pour your<br/><em>spirit.</em>',c:'Chill your spirit. Shake your spirit.<br/>The collection is just below.',s:'SCROLL ON — ENTER THE SANCTUARY',rail:'06 — REVEAL',go:true},
+  ];
+  const kEl=$('#chKicker'), tEl=$('#chTitle'), cEl=$('#chCap'), sEl=$('#chSmall'), railFill=$('#railFill'), railLabel=$('#railLabel'), goBtn=$('#go');
+  let curChapter=-1;
+  function setChapter(i){
+    if(i===curChapter) return; curChapter=i; const ch=CHAPTERS[i];
+    const swap=()=>{ kEl.textContent=ch.k.replace(/&amp;/g,'&'); tEl.innerHTML=ch.t; cEl.innerHTML=ch.c; sEl.innerHTML=ch.s; railLabel.textContent=ch.rail; goBtn.style.visibility=ch.go?'visible':'hidden'; };
+    if(window.gsap && !reduced && curChapter>=0){ gsap.to([kEl,tEl,cEl,sEl],{opacity:0,y:-14,duration:0.32,ease:'power2.in',onComplete(){ swap(); gsap.fromTo([kEl,tEl,cEl,sEl],{opacity:0,y:22},{opacity:1,y:0,duration:0.7,ease:'power3.out',stagger:0.06}); }}); }
+    else swap();
+  }
+  setChapter(0);
 
-  // Scroll progress -> engine + rail
-  const railFill=$('#railFill'), chapterLabel=$('#chapterLabel');
-  const sections=$$('.scene'); const railItems=$$('.progress-rail li');
-  function onScroll(){
-    const max=document.documentElement.scrollHeight-innerHeight; const p=max>0?scrollY/max:0;
+  // Scroll -> flight progress (+ idle drift), past-flight state
+  const flight=$('#flight');
+  let lastScrollT=performance.now(), drift=0;
+  function onFrame(){
+    const fh=flight.offsetHeight-innerHeight;
+    const raw=fh>0? Math.max(0,Math.min(1, scrollY/fh)) : 0;
+    if(performance.now()-lastScrollT>2600 && raw>0.001 && raw<0.985 && !reduced){ drift=Math.min(0.06,drift+0.00035); } else if(scrollY<10){ drift=0; }
+    const p=Math.min(1,raw+drift*(1-raw));
     if(window.__noctara) window.__noctara.setProgress(p);
-    if(railFill) railFill.style.height=(p*100)+'%';
-    // velocity grain stretch
-    document.body.style.setProperty('--vel', Math.min(1, Math.abs(window.__vel||0)/40));
-    // active chapter
-    let idx=0; sections.forEach((s,i)=>{ const r=s.getBoundingClientRect(); if(r.top<innerHeight*0.55) idx=i; });
-    railItems.forEach((li,i)=>li.classList.toggle('active',i===idx));
-    if(chapterLabel) chapterLabel.textContent=String(idx+1).padStart(2,'0')+' / 06';
-    // header contrast
-    $('#header').style.background = scrollY>80 ? 'linear-gradient(to bottom, rgba(9,9,9,.92), rgba(9,9,9,.55))' : '';
+    if(railFill) railFill.style.width=(p*100)+'%';
+    let idx=0; CHAPTERS.forEach((ch,i)=>{ if(p>=ch.at) idx=i; }); setChapter(idx);
+    // auto-disperse near transformation
+    if(window.__noctara && !window.__hoverHeld){ const nearTrans=p>0.74&&p<0.9; if(nearTrans!==window.__transDisp){ window.__transDisp=nearTrans; nearTrans?window.__noctara.startHoverTransition():window.__noctara.stopHoverTransition(); } }
+    document.body.classList.toggle('past', scrollY>flight.offsetHeight-innerHeight*0.6);
+    requestAnimationFrame(onFrame);
   }
-  let lastY=scrollY; window.addEventListener('scroll',()=>{ window.__vel=scrollY-lastY; lastY=scrollY; onScroll(); },{passive:true}); onScroll();
-  railItems.forEach(li=>li.addEventListener('click',()=>{ const el=document.getElementById(li.dataset.target); if(el){ if(lenis) lenis.scrollTo(el,{offset:-70}); else el.scrollIntoView({behavior:'smooth'}); } }));
+  window.addEventListener('scroll',()=>{ lastScrollT=performance.now(); },{passive:true});
+  requestAnimationFrame(onFrame);
 
-  // Reveals
-  if(window.gsap && !reduced){
-    $$('.mask > span').forEach(el=>{ gsap.fromTo(el,{yPercent:110},{yPercent:0,duration:1.2,ease:'power4.out',scrollTrigger:{trigger:el.closest('.scene')||el,start:'top 75%'}}); });
-    $$('.reveal').forEach(el=>{ gsap.fromTo(el,{y:36,opacity:0},{y:0,opacity:1,duration:1,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 85%'}}); });
-    // velocity skew on display titles
-    let proxy={skew:0}, skewSetter=gsap.quickSetter('.display','skewY','deg');
-    ScrollTrigger.create({ onUpdate:self=>{ const skew=gsap.utils.clamp(-4,4,self.getVelocity()/-260); if(Math.abs(skew)>Math.abs(proxy.skew)){ proxy.skew=skew; gsap.to(proxy,{skew:0,duration:0.7,ease:'power3',overwrite:true,onUpdate:()=>skewSetter(proxy.skew)}); } } });
+  // Hover transition on the round CTA (flight eases, blooms disperse, audio muffles)
+  goBtn.addEventListener('pointerenter',()=>{ window.__hoverHeld=true; if(window.__noctara) window.__noctara.startHoverTransition(); });
+  goBtn.addEventListener('pointerleave',()=>{ window.__hoverHeld=false; if(window.__noctara) window.__noctara.stopHoverTransition(); });
+  goBtn.addEventListener('click',()=>{ const el=$('#collection'); if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior:'smooth'}); });
+
+  // Audio — generated drone through a low-pass; muted by default; hover muffles further
+  let actx=null, master=null, filter=null, soundOn=false, muffled=false;
+  function ensureAudio(){
+    if(actx) return;
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    filter=actx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=1200;
+    master=actx.createGain(); master.gain.value=0;
+    filter.connect(master); master.connect(actx.destination);
+    [55,82.4,110.3].forEach((f,i)=>{ const o=actx.createOscillator(); o.type=i?'triangle':'sine'; o.frequency.value=f; const g=actx.createGain(); g.gain.value=i?0.1:0.45; o.connect(g); g.connect(filter); o.start(); });
   }
+  window.__noctaraAudio=function(m){ muffled=m; if(actx&&filter) filter.frequency.linearRampToValueAtTime(m?320:1200, actx.currentTime+0.6); };
+  $('#sound').addEventListener('click',function(){
+    ensureAudio(); actx.resume(); soundOn=!soundOn;
+    this.setAttribute('aria-pressed',String(soundOn));
+    master.gain.linearRampToValueAtTime(soundOn?0.055:0, actx.currentTime+1.1);
+  });
 
-  // Menu
-  const overlay=$('#menuOverlay');
-  function openMenu(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); $('#menuBtn').setAttribute('aria-expanded','true'); }
-  function closeMenu(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); $('#menuBtn').setAttribute('aria-expanded','false'); }
-  $('#menuBtn').addEventListener('click',openMenu); $('#menuClose').addEventListener('click',closeMenu);
-  window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
-
-  // Portal interactions
-  $('#rippleBtn').addEventListener('click',()=>{ if(window.__noctara) window.__noctara.ripple(); $('#portalHint').textContent='◉ RIPPLE SENT — THE DEEP REMEMBERS'; });
-  $('#portal').addEventListener('pointermove',()=>{ if(window.__noctara && Math.random()>0.7) window.__noctara.ripple(); });
-  $('#vortexBtn').addEventListener('click',()=>{ if(window.__noctara) window.__noctara.vortex(); });
+  // Cursor
+  const cursor=$('#cursor'), ring=$('#cursorRing'); let cx=innerWidth/2,cy=innerHeight/2,rx=cx,ry=cy;
+  window.addEventListener('pointermove',e=>{ cx=e.clientX; cy=e.clientY; cursor.style.left=cx+'px'; cursor.style.top=cy+'px'; });
+  (function loop(){ rx+=(cx-rx)*0.15; ry+=(cy-ry)*0.15; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
 
   // Products
   const PRODUCTS=[
@@ -68,33 +91,11 @@
   $$('.bottle-card').forEach(card=>card.addEventListener('click',()=>{
     $$('.bottle-card').forEach(c=>{c.classList.remove('is-active');c.setAttribute('aria-selected','false')});
     card.classList.add('is-active'); card.setAttribute('aria-selected','true');
-    const i=+card.dataset.bottle, p=PRODUCTS[i];
-    const detail=$('#productDetail');
-    if(window.gsap && !reduced) gsap.fromTo(detail,{opacity:0.35,y:12},{opacity:1,y:0,duration:0.6,ease:'power3.out'});
+    const p=PRODUCTS[+card.dataset.bottle];
     $('#dKicker').textContent=p.kicker; $('#dName').textContent=p.name; $('#dDesc').textContent=p.desc;
     $('#dNose').textContent=p.nose; $('#dPalate').textContent=p.palate; $('#dFinish').textContent=p.finish;
-    if(window.__noctara) window.__noctara.setBottle(i);
+    if(window.__noctara) window.__noctara.setBottle(+card.dataset.bottle);
   }));
 
-  // Sound — generated ambient drone, OFF by default, never autoplay
-  let audioCtx=null, gainNode=null, soundOn=false;
-  $('#soundBtn').addEventListener('click',function(){
-    if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); gainNode=audioCtx.createGain(); gainNode.gain.value=0; gainNode.connect(audioCtx.destination);
-      [55,82.4,110].forEach((f,i)=>{ const o=audioCtx.createOscillator(); o.type=i===0?'sine':'triangle'; o.frequency.value=f; const g=audioCtx.createGain(); g.gain.value=i===0?0.5:0.12; o.connect(g); g.connect(gainNode); o.start(); });
-    }
-    soundOn=!soundOn; this.setAttribute('aria-pressed',String(soundOn)); this.textContent=soundOn?'SOUND ON':'SOUND OFF';
-    audioCtx.resume(); gainNode.gain.linearRampToValueAtTime(soundOn?0.06:0, audioCtx.currentTime+1.2);
-  });
-
-  // Custom cursor
-  const cursor=$('#cursor'), ring=$('#cursorRing'); let cx=innerWidth/2,cy=innerHeight/2,rx=cx,ry=cy;
-  window.addEventListener('pointermove',e=>{ cx=e.clientX; cy=e.clientY; cursor.style.left=cx+'px'; cursor.style.top=cy+'px';
-    const t=e.target.closest('[data-cursor],a,button,.bottle-card'); const label=e.target.closest('[data-cursor]')?.dataset.cursor||'';
-    cursor.classList.toggle('is-label',!!label); $('#cursorLabel').textContent=label; });
-  (function loop(){ rx+=(cx-rx)*0.14; ry+=(cy-ry)*0.14; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
-  // Magnetic buttons
-  if(matchMedia('(pointer:fine)').matches && !reduced){ $$('.btn-primary').forEach(b=>{ b.addEventListener('pointermove',e=>{ const r=b.getBoundingClientRect(); b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*0.12}px, ${(e.clientY-r.top-r.height/2)*0.18}px)`; }); b.addEventListener('pointerleave',()=>b.style.transform=''); }); }
-
-  // Contact form (real interaction, no fake backend)
   $('#contactForm').addEventListener('submit',e=>{ e.preventDefault(); $('#formMsg').textContent='✓ Received. Our keeper of allocations will write to you within one blue hour.'; e.target.reset(); });
 })();
