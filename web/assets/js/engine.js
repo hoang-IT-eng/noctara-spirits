@@ -36,8 +36,8 @@
     const x=(Math.random()-0.5)*(14+spread*46);                       // dense centre, sparse walls
     const y=heightAt(x,z)+0.25+Math.random()*0.9;
     pos.set([x,y,z],i*3);
-    const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1), r=6+Math.random()*16;
-    disp.set([x+Math.sin(ph)*Math.cos(th)*r, y+Math.cos(ph)*r*0.6+3, z+Math.sin(ph)*Math.sin(th)*r],i*3);
+    const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1), r=10+Math.random()*24;
+    disp.set([x+Math.sin(ph)*Math.cos(th)*r, y+Math.abs(Math.cos(ph))*r*0.7+4, z+Math.sin(ph)*Math.sin(th)*r],i*3);
     seed[i]=Math.random(); mixv[i]=Math.random();
   }
   const geo=new THREE.BufferGeometry();
@@ -51,13 +51,13 @@
     uMouse:{value:new THREE.Vector2(10,10)}, uCamPos:{value:new THREE.Vector3()},
     uPixelRatio:{value:renderer.getPixelRatio()},
     uCrimson:{value:new THREE.Color('#B51F2B')}, uDeep:{value:new THREE.Color('#8D101D')},
-    uIvory:{value:new THREE.Color('#F0E8D8')}, uBlue:{value:new THREE.Color('#5b7ea6')},
+    uIvory:{value:new THREE.Color('#d8c9a3')}, uBlue:{value:new THREE.Color('#4a6a94')},
     uHalo:{value:0}
   };
   const vert=`
     attribute vec3 aDisperse; attribute float aSeed; attribute float aMix;
-    uniform float uTime,uDisperse,uHover,uPixelRatio,uSizeMul; uniform vec2 uMouse; uniform vec3 uCamPos;
-    varying float vGlow; varying float vMix; varying float vFog; varying float vSeed;
+    uniform float uTime,uDisperse,uHover,uPixelRatio,uSizeMul,uHalo; uniform vec2 uMouse; uniform vec3 uCamPos;
+    varying float vGlow; varying float vMix; varying float vFog; varying float vSeed; varying float vDist;
     void main(){
       vec3 p=mix(position, aDisperse, uDisperse);
       p.x+=sin(uTime*0.6+aSeed*40.0)*0.18; p.y+=sin(uTime*0.8+aSeed*31.0)*0.22;
@@ -71,23 +71,25 @@
       float push=smoothstep(0.42,0.0,md);
       clip.xy+=normalize(d+0.0001)*push*0.14*clip.w;
       vGlow=push;
-      float size=(1.4+bloom*3.4+aSeed*1.6+uHover*1.2)*(1.0+push*0.9)*uSizeMul;
-      gl_PointSize=size*uPixelRatio*(120.0/max(1.0,-mv.z));
-      vMix=aMix; vSeed=aSeed;
+      float size=(0.9+bloom*1.5+aSeed*0.8+uHover*0.7)*(1.0+push*0.7)*uSizeMul;
+      float capPx = uHalo>0.5 ? 64.0 : 26.0;                 // hard cap: no giant foreground blobs
+      gl_PointSize=min(size*uPixelRatio*(34.0/max(1.0,-mv.z)), capPx*uPixelRatio);
+      vMix=aMix; vSeed=aSeed; vDist=distCam;
       vFog=smoothstep(90.0,18.0,distCam);
       gl_Position=clip;
     }`;
   const frag=`
     uniform vec3 uCrimson,uDeep,uIvory,uBlue; uniform float uHalo;
-    varying float vGlow; varying float vMix; varying float vFog; varying float vSeed;
+    varying float vGlow; varying float vMix; varying float vFog; varying float vSeed; varying float vDist;
     void main(){
       vec2 c=gl_PointCoord-0.5; float r=length(c);
       float core=smoothstep(0.5,0.05,r);
-      float petal=smoothstep(0.5,0.32,r)*0.6;                 // soft petal ring
-      vec3 col = vMix<0.62 ? mix(uDeep,uCrimson,vSeed) : (vMix<0.86 ? uIvory : uBlue);
-      col+=vec3(1.0,0.45,0.4)*vGlow*0.9;                      // nearest to cursor glow
-      float a=(core+petal)*(0.25+vFog*0.75)*(uHalo>0.5?0.16:0.9);
-      if(uHalo>0.5) a*=core;
+      float petal=smoothstep(0.5,0.32,r)*0.45;                // soft petal ring
+      vec3 col = vMix<0.78 ? mix(uDeep,uCrimson,vSeed) : (vMix<0.90 ? uIvory : uBlue);
+      col+=vec3(1.0,0.45,0.4)*vGlow*0.8;                      // nearest to cursor glow
+      float nearFade=smoothstep(1.4,5.0,vDist);               // foreground points fade OUT instead of blowing up
+      float a=(core*0.6+petal*0.35)*(0.18+vFog*0.6)*nearFade;
+      if(uHalo>0.5) a=core*0.05*nearFade*(0.3+vFog*0.7);
       gl_FragColor=vec4(col,a);
     }`;
   function makePoints(halo){
